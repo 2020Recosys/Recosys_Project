@@ -214,7 +214,7 @@ full_Y : 해당 윈도우(9일치)의 다음날(10일째)에 상품을 구매했
 
 
 ###################################
-## 25개의 컬럼명이 첨부한 파일을 불러오기
+## 컬럼명이 저장된 파일을 불러오기
 x_columns = pd.read_csv("D:/Cheil/preprocessed_x_columns3.csv")
 x_columns = x_columns.drop(columns=['Unnamed: 0'], axis=1).rename(columns={'0' : 'x_columns'})
 x_columns = pd.DataFrame(pd.concat([x_columns.iloc[:25, 0], x_columns.iloc[26:, 0]]))
@@ -230,13 +230,11 @@ full_X = pd.DataFrame(np.zeros((0, 27)), columns=list(x_columns.iloc[:,0]))
 ## Y값(종속변수 == 다음날 구매 여부 예측)을 저장할 변수 생성
 full_Y = []
 
-
-## 전체 450명 중에서 100명만 분석
 #survey3 = survey3.iloc[:100, :]
 check_zero_session = []
 
 ## 설문 대상자 한 명의 클릭스트림 데이터를 기반으로 세션별 변수 값들을 추출 후, full_X 변수에 concat하고, full_Y에 append함
-# 총 100회(=100명) 반복
+# 설문 대상자 수 만큼 반복
 for uid_index, uid in enumerate(survey3.iloc[:,0]) :
     print("# %d번째" % uid_index)
     #uid = survey3.iloc[99,0]
@@ -423,7 +421,7 @@ for uid_index, uid in enumerate(survey3.iloc[:,0]) :
         t_day.append(5)
     if 2 in uid_02_period :
         t_day.append(13)
-        t_day.append(13)
+        t_day.append(14)
         t_day.append(15)
     if 3 in uid_02_period :
         t_day.append(23)

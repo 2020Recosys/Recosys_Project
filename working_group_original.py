@@ -135,7 +135,8 @@ survey3 = pd.concat([survey2.where(survey['A4_3'] == 4).dropna(),
                      survey2.where(survey['A5_3'] == 4).dropna(),
                      survey2.where(survey['A6_3'] == 4).dropna()
                      ]).drop_duplicates()
-survey3 = survey3[['UID']]total_info = pd.read_csv("D:/Cheil/preprocessed_total_info.csv")
+survey3 = survey3[['UID']]
+total_info = pd.read_csv("D:/Cheil/preprocessed_total_info.csv")
 total_info = total_info.drop(['Unnamed: 0'], axis=1)
 o1_cv = pd.read_csv("D:/Cheil/preprocessed_o1_cv.csv", header=None, names=['ownershp_1'])
 '''
@@ -403,8 +404,6 @@ for uid_index, uid in enumerate(survey3.iloc[:,0]) :
     t_day = pd.DataFrame(t_le_f.dt.day)
     t_day = t_day.rename(columns={'Time' : 't_day'})
     uid_02_period = survey[survey['UID'] == uid]
-    
-    # 
     uid_month = uid_02_period[['A4_2_1', 'A5_2_1', 'A6_2_1']]
     uid_02_period = uid_02_period[['A4_2_2', 'A5_2_2', 'A6_2_2']]
     uid_02_period = [int(uid_02_period.iloc[0, x]) if uid_month.iloc[0, x] == 3 else 0 for x in range(len(uid_02_period.columns))]

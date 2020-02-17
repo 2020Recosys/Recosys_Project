@@ -1,4 +1,4 @@
-,x_columns
+,0
 0,unique_site
 1,total_site
 2,keyword1
@@ -24,5 +24,6 @@
 22,t_day
 23,t_buy
 24,site_ratio
-25,t_le_f2
-26,t_le_f3
+25,shop_display_time
+26,t_hour
+27,t_minute

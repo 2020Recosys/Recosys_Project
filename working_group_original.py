@@ -13,6 +13,7 @@ from tensorflow.keras.optimizers import Adam, Adamax
 from tensorflow.keras import backend as K
 from sklearn import  metrics
 
+
 ## 클릭스트림 데이터 불러오기
 pc_0601 = pd.read_csv("D:/Cheil/preprocessed_data.csv", sep=',')
 pc_0601 = pc_0601.drop(['Unnamed: 0'], axis=1)
@@ -415,16 +416,10 @@ for uid_index, uid in enumerate(survey3.iloc[:,0]) :
     t_buy['t_buy'] = 0
     t_day = []
     if 1 in uid_02_period :
-        t_day.append(3)
-        t_day.append(4)
         t_day.append(5)
     if 2 in uid_02_period :
-        t_day.append(13)
-        t_day.append(14)
         t_day.append(15)
     if 3 in uid_02_period :
-        t_day.append(23)
-        t_day.append(24)
         t_day.append(25)
     def check_buy(t_buy, t_day) :
         for i, i_value in enumerate(t_buy['t_day']) :
@@ -511,12 +506,23 @@ for uid_index, uid in enumerate(survey3.iloc[:,0]) :
         full_X = pd.concat([full_X, X_session])
         full_Y.append(X.iloc[(i + window_size) * max_session + 1, 23])
     
+## full_Y를 데이터프레임으로 변환
+full_Y = pd.DataFrame(full_Y, columns=['full_Y'])
+
+## full_X와 full_Y 저장
+full_X.to_csv("D:/Cheil/0217_full_X.csv", encoding='utf-8-sig')
+full_Y.to_csv("D:/Cheil/0217_full_Y.csv", encoding='utf-8-sig')
+'''
+## ------------------ 추후에 데이터를 불러올 때는 아래의 것들만 불러오면 됨 3
+full_X = pd.read_csv("D:/Cheil/0217_full_X.csv").drop(columns=['Unnamed: 0'], axis=1)
+full_Y = pd.read_csv("D:/Cheil/0217_full_Y.csv").drop(columns=['Unnamed: 0'], axis=1)
+'''
 
 
 ## 기준이 되었던 행(0번 행)을 제거하고, full_Y를 list에서 데이터 프레임으로 변환
 full_X2 = full_X.copy()
 #full_X2 = full_X2.iloc[1:,:]
-full_Y2 = pd.DataFrame(full_Y, columns=['full_Y'])
+full_Y2 = full_Y.copy()
 
 #full_X2 = full_X2.iloc[:4656960, :]
 #full_Y2 = full_Y.iloc[:9408, :]
@@ -532,13 +538,14 @@ full_X2 = scaler.fit_transform(full_X2)
 full_X2 = np.nan_to_num(full_X2, nan=-9999)
 
 
-## Train size : 75%, Test size : 25%
+## Train size : 76%, Test size : 24%
 # 추후에 Train, Validation, Test로 나눠서 분석해야됨
-train_ratio = 0.75
+train_ratio = 0.76
 train_size = int(len(full_X2) * train_ratio)
 if train_size % 21 != 0 :
     t_size = train_size % 21
     train_size -= t_size
+    print("수정")
 train_Y_size = int(len(full_Y2) * train_ratio)
 
 train_X = np.array(full_X2[:train_size, :])
@@ -554,10 +561,10 @@ class_weights = class_weight.compute_class_weight('balanced',
 class_weights = dict(enumerate(class_weights))
 
 ## RNN의 입력값 형태를 계산
-#a_samples1 = int((calendar.monthrange(2014, 6)[1] - window_size) * ((len(survey3) - 2) * train_ratio))
-#a_samples2 = int((calendar.monthrange(2014, 6)[1] - window_size) * ((len(survey3) - 2) * (1 - train_ratio)))
-a_samples1 = int((calendar.monthrange(2014, 6)[1] - window_size) * (len(survey3) * train_ratio))
-a_samples2 = int((calendar.monthrange(2014, 6)[1] - window_size) * (len(survey3) * (1 - train_ratio)))
+a_samples1 = int((calendar.monthrange(2014, 6)[1] - window_size) * ((len(survey3) - 1) * train_ratio))
+a_samples2 = int((calendar.monthrange(2014, 6)[1] - window_size) * ((len(survey3) - 1) * round((1 - train_ratio), 2)))
+#a_samples1 = int((calendar.monthrange(2014, 6)[1] - window_size) * (len(survey3) * train_ratio))
+#a_samples2 = int((calendar.monthrange(2014, 6)[1] - window_size) * (len(survey3) * round((1 - train_ratio), 2)))
 a_timesteps = int(window_size * max_session)
 a_features = int(train_X.shape[1])
 a_batch_size = 21

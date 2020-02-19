@@ -13,8 +13,8 @@ from tensorflow.keras.optimizers import Adam, Adamax
 from tensorflow.keras import backend as K
 from sklearn import  metrics
 
-os.environ["CUDA_VISIBLE_DEVICES"]="-1"  
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+#os.environ["CUDA_VISIBLE_DEVICES"]="-1"  
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 ## 클릭스트림 데이터 불러오기
 pc_0601 = pd.read_csv("D:/Cheil/preprocessed_data.csv", sep=',')
@@ -116,7 +116,7 @@ o1_cv.to_csv("D:/Cheil/preprocessed_o1_cv.csv")
 
 '''
 ## ------------------ 추후에 데이터를 불러올 때는 아래의 것들만 불러오면 됨 1
-pc_survey = pd.read_excel("D:/Cheil/140716_SSK 구매행태 조사 Raw Data_F.xlsx", sep=',')
+pc_survey = pd.read_excel("C:/Users/sim-server/Desktop/RecommenderSystems/클릭스트림/140716_SSK 구매행태 조사 Raw Data_F.xlsx", sep=',')
 survey = pc_survey[['UID', 'A3_1', 'A3_2', 'A3_3', 
                     'A4_2_1', 'A4_2_2', 'A4_3', 'A4_5',
                     'A5_2_1', 'A5_2_2', 'A5_3', 'A5_5', 
@@ -512,14 +512,14 @@ for uid_index, uid in enumerate(survey3.iloc[:,0]) :
 full_Y = pd.DataFrame(full_Y, columns=['full_Y'])
 
 ## full_X와 full_Y 저장
-full_X.to_csv("D:/Cheil/0217_full_X.csv", encoding='utf-8-sig')
-full_Y.to_csv("D:/Cheil/0217_full_Y.csv", encoding='utf-8-sig')
+full_X.to_csv("C:/Users/sim-server/Desktop/RecommenderSystems/클릭스트림/0217_full_X.csv", encoding='utf-8-sig')
+full_Y.to_csv("C:/Users/sim-server/Desktop/RecommenderSystems/클릭스트림/0217_full_Y.csv", encoding='utf-8-sig')
 '''
 ## ------------------ 추후에 데이터를 불러올 때는 아래의 것들만 불러오면 됨 3
 max_session = 55
 window_size = 9
-full_X = pd.read_csv("D:/Cheil/0217_full_X.csv").drop(columns=['Unnamed: 0'], axis=1)
-full_Y = pd.read_csv("D:/Cheil/0217_full_Y.csv").drop(columns=['Unnamed: 0'], axis=1)
+full_X = pd.read_csv("C:/Users/sim-server/Desktop/RecommenderSystems/클릭스트림/0217_full_X.csv").drop(columns=['Unnamed: 0'], axis=1)
+full_Y = pd.read_csv("C:/Users/sim-server/Desktop/RecommenderSystems/클릭스트림/0217_full_Y.csv").drop(columns=['Unnamed: 0'], axis=1)
 '''
 
 
@@ -532,7 +532,7 @@ full_Y2 = full_Y.copy()
 
 #full_X2 = full_X2.iloc[:4656960, :]
 #full_Y2 = full_Y.iloc[:9408, :]
-full_X2 = full_X2.drop(columns=['t_buy'])
+full_X2 = full_X2.drop(columns=['t_day', 't_buy'])
 
 ## Data Scaling
 #scaler = StandardScaler() 
@@ -544,21 +544,26 @@ full_X2 = scaler.fit_transform(full_X2)
 full_X2 = np.nan_to_num(full_X2, nan=-9999)
 
 
-## Train size : 76%, Test size : 24%
+## Train size : 68%, Validation size : 20%, Test size : 12%
 # 추후에 Train, Validation, Test로 나눠서 분석해야됨
-train_ratio = 0.76
+train_ratio = 0.68
 train_size = int(len(full_X2) * train_ratio)
+validation_size = int(len(full_X2) * (train_ratio + 0.20))
 if train_size % 21 != 0 :
     t_size = train_size % 21
     train_size -= t_size
     print("수정")
 train_Y_size = int(len(full_Y2) * train_ratio)
+validation_Y_size = int(len(full_Y2) * (train_ratio + 0.20))
 
 train_X = np.array(full_X2[:train_size, :])
 train_Y = np.array(full_Y2.iloc[:train_Y_size, :])
 
-test_X = np.array(full_X2[train_size:, :])
-test_Y = np.array(full_Y2.iloc[train_Y_size:, :])
+validation_X = np.array(full_X2[train_size:validation_size, :])
+validation_Y = np.array(full_Y2.iloc[train_Y_size:validation_Y_size, :])
+
+test_X = np.array(full_X2[validation_size:, :])
+test_Y = np.array(full_Y2.iloc[validation_Y_size:, :])
 
 ## Class 불균형 해결을 위해 Class별 가중치 적용
 class_weights = class_weight.compute_class_weight('balanced',
@@ -568,7 +573,8 @@ class_weights = dict(enumerate(class_weights))
 
 ## RNN의 입력값 형태를 계산
 a_samples1 = int((calendar.monthrange(2014, 6)[1] - window_size) * ((len(survey3) - 1) * train_ratio))
-a_samples2 = int((calendar.monthrange(2014, 6)[1] - window_size) * ((len(survey3) - 1) * round((1 - train_ratio), 2)))
+a_samples2 = int((calendar.monthrange(2014, 6)[1] - window_size) * ((len(survey3) - 1) * 0.2))
+a_samples3 = int((calendar.monthrange(2014, 6)[1] - window_size) * ((len(survey3) - 1) * 0.12))
 #a_samples1 = int((calendar.monthrange(2014, 6)[1] - window_size) * (100 * train_ratio))
 #a_samples2 = int((calendar.monthrange(2014, 6)[1] - window_size) * (100 * round((1 - train_ratio), 2)))
 a_timesteps = int(window_size * max_session)
@@ -578,7 +584,8 @@ a_batch_size = 21
 
 ## Reshape input to be 3D [samples, timesteps, features]
 train_X = train_X.reshape((a_samples1, a_timesteps, a_features))
-test_X = test_X.reshape((a_samples2, a_timesteps, a_features))
+validation_X = validation_X.reshape((a_samples2, a_timesteps, a_features))
+test_X = test_X.reshape((a_samples3, a_timesteps, a_features))
 print(train_X.shape, train_Y.shape, test_X.shape, test_Y.shape)
 
 
@@ -600,10 +607,11 @@ model.compile(loss='binary_crossentropy', optimizer=Adamax(lr=0.0005), metrics=[
 
 
 ## Fit network
-history = model.fit(train_X, train_Y, epochs=10, class_weight=class_weights, batch_size=a_batch_size, validation_data=(test_X, test_Y), shuffle=False)
+history = model.fit(train_X, train_Y, epochs=30, class_weight=class_weights, batch_size=a_batch_size, validation_data=(validation_X, validation_Y), shuffle=False)
 
 
 ## Sensitivity Analysis
+full_X_c = full_X.drop(columns=['t_day', 't_buy']).columns
 importance_df = pd.DataFrame(np.zeros((a_features, 2)), columns=['varible_name', 'perturbation_effect'])
 def var_importance(model):
     x = test_X # Get a sample of data
@@ -614,7 +622,7 @@ def var_importance(model):
         new_x[:, :, i] = new_x[:, :, i] + perturbation
         perturbed_out = model.predict(new_x)
         effect = ((orig_out - perturbed_out) ** 2).mean() ** 0.5 #RMSE
-        importance_df.iloc[i,0] = full_X.columns[i]
+        importance_df.iloc[i,0] = full_X_c[i]
         importance_df.iloc[i,1] = effect
         print(f'Variable {i+1}, perturbation effect: {effect:.4f}')
 var_importance(model)
@@ -625,7 +633,7 @@ print(importance_df)
 ## Plot 예시
 mpl.rc('font', family='New Gulim')
 mpl.rc('axes', unicode_minus=False)
-
+plt.subplots(figsize=(18,5))
 plt.bar(importance_df.iloc[:,0], importance_df.iloc[:,1])
 plt.title('Sensitivity Analysis')
 plt.xlabel('IV')
@@ -634,17 +642,33 @@ plt.xticks(importance_df.iloc[:,0], rotation=90)
 plt.show()
 
 plt.plot(history.history['accuracy'], 'b', label='acc_train')
-plt.plot(history.history['val_accuracy'], 'r', label='acc_test')
+plt.plot(history.history['val_accuracy'], 'r', label='acc_val')
 plt.plot(history.history['recall_m'], 'b--', label='rec_train')
-plt.plot(history.history['val_recall_m'], 'r--', label='rec_test')
+plt.plot(history.history['val_recall_m'], 'r--', label='rec_val')
 plt.title('Accuracy & Recall')
 plt.xlabel('Epochs')
 plt.ylabel('Accuracy & Recall')
 plt.legend()
 plt.show()
 
+plt.plot(history.history['accuracy'], 'b', label='acc_train')
+plt.plot(history.history['val_accuracy'], 'r', label='acc_val')
+plt.title('Accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()
+
+plt.plot(history.history['recall_m'], 'b--', label='rec_train')
+plt.plot(history.history['val_recall_m'], 'r--', label='rec_val')
+plt.title('Recall')
+plt.xlabel('Epochs')
+plt.ylabel('Recall')
+plt.legend()
+plt.show()
+
 plt.plot(history.history['loss'], label='train')
-plt.plot(history.history['val_loss'], label='test')
+plt.plot(history.history['val_loss'], label='validation')
 plt.title('Loss')
 plt.xlabel('Epochs')
 plt.ylabel('Loss')
@@ -678,9 +702,9 @@ print(metrics.classification_report(test_Y, pred.round()))
 
 ## 모델 및 가중치 저장
 model_json = model.to_json()
-with open("D:/Cheil/model.json", "w") as json_file : 
+with open("C:/Users/sim-server/Desktop/RecommenderSystems/클릭스트림/0219_1_model.json", "w") as json_file : 
     json_file.write(model_json)
-model.save_weights("D:/Cheil/model.h5")
+model.save_weights("C:/Users/sim-server/Desktop/RecommenderSystems/클릭스트림/0219_1_model.h5")
 
 
 '''

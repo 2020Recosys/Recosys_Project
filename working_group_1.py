@@ -174,12 +174,6 @@ def data_for_LSTM(survey_product, total_info2, full_X, full_Y, check_zero_sessio
     full_Y = Y_하순_가전제품.copy()
     uid = survey_product.iloc[34,0]
     uid_index = 34
-    
-    check_max_session = pd.DataFrame(total_info2.groupby(['UID'])['session_id'].unique())
-    for i in range(len(check_max_session)) :
-        check_max_session.iloc[i,0] = len(check_max_session.iloc[i,0])
-    check_max_session = check_max_session['session_id'].sort_values(ascending=False)
-    check_max_session = pd.DataFrame(check_max_session)
     '''
     for uid_index, uid in enumerate(survey_product.iloc[:,0]) :
         print("# %d번째" % uid_index)
@@ -430,22 +424,6 @@ def Main_Model(full_X2, full_Y2, survey_product, max_session = 580, a_batch_size
     train_ratio = 0.70
     validation_ratio = 0.20
     
-    '''
-    train_size = int(len(survey_product) * train_ratio) * max_session * a_batch_size
-    validation_size = int(len(survey_product) * validation_ratio) * max_session * a_batch_size + train_size
-        
-    train_Y_size = int(len(survey_product) * train_ratio)
-    validation_Y_size = int(len(survey_product) * validation_ratio) + train_Y_size
-    
-    train_X = np.array(full_X2[:train_size, :])
-    train_Y = np.array(full_Y2.iloc[:train_Y_size, :])
-    
-    validation_X = np.array(full_X2[train_size:validation_size, :])
-    validation_Y = np.array(full_Y2.iloc[train_Y_size:validation_Y_size, :])
-    
-    test_X = np.array(full_X2[validation_size:, :])
-    test_Y = np.array(full_Y2.iloc[validation_Y_size:, :])
-    '''
     train_size = int(len(survey_product) * train_ratio) * max_session
     validation_size = int(len(survey_product) * validation_ratio) * max_session + train_size
         

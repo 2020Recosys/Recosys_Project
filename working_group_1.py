@@ -464,17 +464,21 @@ def Main_Model(full_X2, full_Y2, survey_product, max_session = 580, a_batch_size
     ## Design network   
     model = Sequential()
     model.add(Masking(mask_value=-9999, input_shape=(a_timesteps, a_features)))
-    model.add(LSTM(64, input_shape=(a_timesteps, a_features)))
+    #model.add(LSTM(64, input_shape=(a_timesteps, a_features)))
     #model.add(Dense(32, activation= 'relu'))
     #model.add(Dense(16, activation= 'relu'))
+    model.add(LSTM(64, input_shape=(a_timesteps, a_features), return_sequences=True))
+    model.add(LSTM(64, return_sequences=True))
+    model.add(LSTM(64))
     model.add(Dense(1, activation='sigmoid'))
     #model.compile(loss='binary_crossentropy', optimizer=RMSprop(lr= 0.003, rho = 0.9), metrics=['accuracy', recall_m])
     model.compile(loss='binary_crossentropy', optimizer=Adamax(lr= 0.0005), metrics=['accuracy', recall_m])
     
     ## Fit network
-    history = model.fit(train_X, train_Y, epochs=10, class_weight=class_weights, batch_size=a_batch_size, validation_data=(validation_X, validation_Y), shuffle=False)
+    history = model.fit(train_X, train_Y, epochs=20, class_weight=class_weights, batch_size=1, validation_data=(validation_X, validation_Y), shuffle=False)
     
     return history, test_X, test_Y, a_features, model
+
 
 history, test_X, test_Y, a_features, model = Main_Model(X_하순_가전제품, Y_하순_가전제품, survey_하순_가전제품)
 

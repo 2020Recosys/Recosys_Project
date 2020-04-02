@@ -17,7 +17,6 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 구매여부.buy = 구매여부.buy.apply(lambda x:0 if x == 0 else 1)
 구매여부 = 구매여부.sort_index()
 구매여부 = 구매여부.reset_index()
-g = 구매여부.groupby('clnt_id')
 
 구매여부1 = pd.DataFrame()
 for id in tqdm_notebook(구매여부['clnt_id'].unique()):
@@ -38,7 +37,7 @@ def to_flat(df):
 
 온라인2 = to_flat(온라인2)
 #온라인 = pd.merge(온라인, 구매여부1, left_on = ['clnt_id', 'sess_id'], right_on = ['clnt_id', 'sess_id'])
-온라인2 = 온라인2.merge(구매여부, left_on='unique_id', right_on='unique_id')
+온라인2 = 온라인2.merge(구매여부1, left_on='unique_id', right_on='unique_id')
 온라인2.sort_values(by=['clnt_id','sess_id'], inplace=True)
 features = 온라인2.columns[1:-3]
 

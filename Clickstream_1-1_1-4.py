@@ -16,7 +16,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 구매여부.buy = 구매여부.buy.apply(lambda x:0 if x == 0 else 1)
 구매여부 = 구매여부.sort_index()
 구매여부 = 구매여부.reset_index()
-#g = 구매여부.groupby('clnt_id')
+
 
 구매여부1 = pd.DataFrame()
 for id in tqdm_notebook(구매여부['clnt_id'].unique()):
@@ -92,7 +92,7 @@ for i, j in tqdm_notebook(zip(idx1, idx2), total=len(idx1)):
 # (session, sequence, variables) 3d array 변환
 온라인_x = []
 for i, j in tqdm_notebook(zip(idx1, idx2), total=len(idx1)):
-    온라인_x.append(온라인.iloc[i:j, 4:-3].values)
+    온라인_x.append(온라인.iloc[i:j, 3:-2].values)
     
 
 온라인_x = np.array(온라인_x)
@@ -143,6 +143,10 @@ acc_scores = cross_validate(model2, X_resampled, Y_resampled, cv=cv, verbose=2, 
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
 
+
+
+## 1-4. 현재 세션 앞 부분의 1~10개의 클릭 로그를 대상으로 구매 예측을 할 때, LSTM만을 사용해서 구매 예측 [현준]
+
 def models1():
     model = Sequential()
     model.add(Masking(mask_value=0., input_shape=(X_resampled1.shape[1], X_resampled1.shape[2])))
@@ -151,7 +155,6 @@ def models1():
     model.compile(loss='binary_crossentropy', optimizer=RMSprop(lr= 0.001, rho = 0.9), metrics=['acc',f1_m,precision_m, recall_m])
     return model
 
-## 1-4. 현재 세션 앞 부분의 1~10개의 클릭 로그를 대상으로 구매 예측을 할 때, LSTM만을 사용해서 구매 예측 [현준]
 from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, cross_val_predict, cross_validate
 from sklearn.metrics import precision_recall_fscore_support as score
 from keras.wrappers.scikit_learn import KerasClassifier

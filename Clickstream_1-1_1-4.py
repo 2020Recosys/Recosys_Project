@@ -6,7 +6,7 @@ from tqdm import tqdm_notebook
 import itertools
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-온라인 = pd.read_csv('C:/Users/sim-server/Desktop/RecommenderSystems/클릭스트림/온라인_전처리_final_32columns.csv', encoding='utf-8')
+온라인 = pd.read_csv('C:/Users/JKKIM/Desktop/Recommender/온라인_전처리_final_32columns/온라인_전처리_final_32columns.csv', encoding='utf-8')
 온라인 = 온라인.sort_values(['clnt_id','sess_id','hit_seq']).reset_index(drop=True)
 
 온라인['unique_id'] = list(map(lambda x,y: str(x)+'_'+str(y), 온라인.clnt_id, 온라인.sess_id))
@@ -78,6 +78,8 @@ def make_padding_and_oversample(X, Y, length=350):
 idx1 = 온라인.unique_id.drop_duplicates().index.tolist()
 idx2 = idx1[1:] + [len(온라인)]
 
+'''
+# 구매 시점이 있으면 index 저장하고 없으면 마지막 index 그대로 가져옴
 idx3 = []
 for i, j in tqdm_notebook(zip(idx1, idx2), total=len(idx1)):
     temp = 온라인.buy.iloc[i:j]
@@ -85,15 +87,14 @@ for i, j in tqdm_notebook(zip(idx1, idx2), total=len(idx1)):
         idx3.append(temp[temp == 1].index[0])
     except:
         idx3.append(j)
+'''
 
 # (session, sequence, variables) 3d array 변환
 온라인_x = []
-for i, j in tqdm_notebook(zip(idx1, idx3), total=len(idx1)):
+for i, j in tqdm_notebook(zip(idx1, idx2), total=len(idx1)):
     온라인_x.append(온라인.iloc[i:j, 4:-3].values)
     
-#scaler = StandardScaler() 
-#scaler = MinMaxScaler(feature_range=(0, 1))
-#온라인_x = scaler.fit_transform(np.array(온라인_x))
+
 온라인_x = np.array(온라인_x)
 
 # session 당 구매 여부
@@ -101,22 +102,11 @@ for i, j in tqdm_notebook(zip(idx1, idx3), total=len(idx1)):
 for i,j in tqdm_notebook(zip(idx1,idx2), total=len(idx1)):
     온라인_y.append([int(온라인.buy.iloc[i:j].sum()>0)])
 
-idx = list(pd.Series(idx3) - pd.Series(idx1))
+idx = list(pd.Series(idx2) - pd.Series(idx1))
 max(idx), np.percentile(pd.Series(idx),99)
 
 X_padded, X_resampled, Y_resampled = make_padding_and_oversample(온라인_x, 온라인_y, length=max(idx))
 
-'''
-X_padded.shape # (294750, 357, 25)
-np.savetxt("C:/Users/sim-server/Desktop/RecommenderSystems/클릭스트림/X_padded.txt", X_padded.reshape((357,-1)), fmt="%s")
-X_resampled.shape # (516162, 357, 25)
-np.savetxt("C:/Users/sim-server/Desktop/RecommenderSystems/클릭스트림/X_resampled.txt", X_resampled.reshape((357,-1)), fmt="%s")
-len(Y_resampled) # 516162
-np.savetxt("C:/Users/sim-server/Desktop/RecommenderSystems/클릭스트림/Y_resampled.txt", np.array(Y_resampled), fmt="%s")
-'''
-
-#X_train, X_test, y_train, y_test = train_test_split(X_resampled, Y_resampled, test_size=0.3, random_state=42)
-#X_train.shape, X_test.shape, y_train.shape, y_test.shape
 
 import os
 
@@ -133,19 +123,12 @@ KTF.tf.compat.v1.keras.backend.set_session(session)
 
 def models():
     model = Sequential()
-    model.add(Masking(mask_value=0., input_shape=(X_train.shape[1], X_train.shape[2])))
-    model.add(LSTM(64,input_shape = (X_train.shape[1], X_train.shape[2])))
-    #model.add(Dense(32, activation= 'relu'))
-    #model.add(Dropout(0.2))
-    #model.add(Dense(16, activation= 'relu'))
+    model.add(Masking(mask_value=0., input_shape=(X_resampled.shape[1], X_resampled.shape[2])))
+    model.add(LSTM(64,input_shape = (X_resampled.shape[1], X_resampled.shape[2])))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer=RMSprop(lr= 0.001, rho = 0.9), metrics=['acc',f1_m,precision_m, recall_m])
     return model
 
-#model = models(X_train)
-#model.summary()
-
-#history = model.fit(X_train, y_train, epochs=25, batch_size=1000, validation_data=(X_test, y_test), verbose=1, shuffle=True)
 
 ## Cross-validation
 from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, cross_val_predict, cross_validate
@@ -153,35 +136,44 @@ from sklearn.metrics import precision_recall_fscore_support as score
 from keras.wrappers.scikit_learn import KerasClassifier
 
 
-X_train, X_test, y_train, y_test = train_test_split(X_resampled, Y_resampled, test_size=0.3, random_state=42)
+#X_train, X_test, y_train, y_test = train_test_split(X_resampled, Y_resampled, test_size=0.3, random_state=42)
 model2 = KerasClassifier(build_fn=models, epochs=25, batch_size=1000, verbose=1)
 cv = StratifiedKFold(10, shuffle=True, random_state=42)
-acc_scores = cross_validate(model2, X_train, y_train, cv=cv, verbose=1, n_jobs=None, return_train_score=True,
-                            scoring=['accuracy', 'f1', 'precision', 'recall'])
+acc_scores = cross_validate(model2, X_resampled, Y_resampled, cv=cv, verbose=2, n_jobs=None, return_train_score=True,
+                            return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
-if __name__ == "__main__":
-    acc_scores = cross_validate(model2, X_train, y_train, cv=cv, verbose=1, n_jobs=-1, return_train_score=True,
-                                scoring=['accuracy', 'f1', 'precision', 'recall'])
 
-#y_pred = cross_val_predict(model2, X_test, y_test, cv=10)
-#precision, recall, fscore, support = score(y, y_pred, average='micro') 
-#print(fscore)
-
+def models1():
+    model = Sequential()
+    model.add(Masking(mask_value=0., input_shape=(X_resampled1.shape[1], X_resampled1.shape[2])))
+    model.add(LSTM(64,input_shape = (X_resampled1.shape[1], X_resampled1.shape[2])))
+    model.add(Dense(1, activation='sigmoid'))
+    model.compile(loss='binary_crossentropy', optimizer=RMSprop(lr= 0.001, rho = 0.9), metrics=['acc',f1_m,precision_m, recall_m])
+    return model
 
 ## 1-4. 현재 세션 앞 부분의 1~10개의 클릭 로그를 대상으로 구매 예측을 할 때, LSTM만을 사용해서 구매 예측 [현준]
+from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, cross_val_predict, cross_validate
+from sklearn.metrics import precision_recall_fscore_support as score
+from keras.wrappers.scikit_learn import KerasClassifier
+
 total_scores_1_10 = []
 for hitseq_num in tqdm_notebook(range(1,11)):
+    print("%d번째 시작" % hitseq_num)
     온라인_x1, 온라인_y1 = [], []
     for i,j,k in zip(idx, 온라인_x, 온라인_y):
         if i >= hitseq_num:
             온라인_x1.append(j)
             온라인_y1.append(k)
-    X_padded1, X_resampled1, Y_resampled1 = make_padding_and_oversample(np.array(온라인_x1), 온라인_y1, length= int(hitseq_num))
+            
+    print("%d번째 padding 시작" % hitseq_num)
+    X_padded1, X_resampled1, Y_resampled1 = make_padding_and_oversample(np.array(온라인_x1), np.array(온라인_y1), length=int(hitseq_num))
     
-    X_train1, X_test1, y_train1, y_test1 = train_test_split(X_resampled1, Y_resampled1, test_size=0.3, random_state=42)
-    model2 = KerasClassifier(build_fn=models, epochs=25, batch_size=1000, verbose=1)
+    print("%d번째 train/testp split 시작" % hitseq_num)
+    #X_train1, X_test1, y_train1, y_test1 = train_test_split(X_resampled1, Y_resampled1, test_size=0.3, random_state=42)
+    model2 = KerasClassifier(build_fn=models1, epochs=25, batch_size=1000, verbose=1)
     cv = StratifiedKFold(10, shuffle=True, random_state=42)
-    acc_scores = cross_val_score(model2, X_train, y_train, cv=cv, verbose=1, n_jobs=None)
+    acc_scores = cross_validate(model2, X_resampled1, Y_resampled1, cv=cv, verbose=2, n_jobs=None, return_train_score=True,
+                            return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
     total_scores_1_10.append(acc_scores)
 
 

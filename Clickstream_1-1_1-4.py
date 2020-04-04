@@ -132,6 +132,19 @@ cv = StratifiedKFold(10, shuffle=True, random_state=42)
 acc_scores = cross_validate(model2, X_resampled, Y_resampled, cv=cv, verbose=2, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
+acc_col = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
+acc_result = pd.DataFrame(np.zeros((len(acc_scores), len(acc_col))), columns=acc_col)
+acc_result.iloc[0, 0] = np.mean(acc_scores[0]['test_accuracy']) 
+acc_result.iloc[0, 1] = np.mean(acc_scores[0]['test_f1'])
+acc_result.iloc[0, 2] = np.mean(acc_scores[0]['test_precision'])
+acc_result.iloc[0, 3] = np.mean(acc_scores[0]['test_recall'])
+  
+acc_result.to_csv('C:/Users/JKKIM/Desktop/Recommender/온라인_전처리_final_32columns/온라인_1-1.csv', encoding='utf-8')
+
+
+
+
+
 
 
 
@@ -281,6 +294,15 @@ for hitseq_num in tqdm_notebook(range(1,11)):
     total_scores_1_10.append(acc_scores)
 
 
+total_col = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
+total_result = pd.DataFrame(np.zeros((10, len(total_col))), columns=total_col)
+for t_s in range(len(total_scores_1_10)) :
+    total_result.iloc[t_s, 0] = np.mean(total_scores_1_10[t_s]['test_accuracy']) 
+    total_result.iloc[t_s, 1] = np.mean(total_scores_1_10[t_s]['test_f1'])
+    total_result.iloc[t_s, 2] = np.mean(total_scores_1_10[t_s]['test_precision'])
+    total_result.iloc[t_s, 3] = np.mean(total_scores_1_10[t_s]['test_recall'])
+  
+total_result.to_csv('C:/Users/JKKIM/Desktop/Recommender/온라인_전처리_final_32columns/온라인_2-4.csv', encoding='utf-8')
 
 
 

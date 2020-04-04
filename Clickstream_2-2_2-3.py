@@ -276,7 +276,7 @@ def to_flat(df):
 def make_padding_and_oversample2(X, Y, length=350):
     X_flat = to_flat(pd.DataFrame(X, columns=온라인2.columns))
     print("to_flat 완료")
-    X_flat1 = X_flat.merge(구매여부2, left_on='unique_id', right_on='unique_id', how='left')
+    X_flat1 = X_flat.merge(구매여부, left_on='unique_id', right_on='unique_id', how='left')
     X_flat1 = X_flat1.dropna()
     X_flat1.sort_values(by=['clnt_id','sess_id'], inplace=True)
     Y = X_flat1.buy.astype('int').to_list()

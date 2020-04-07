@@ -51,7 +51,7 @@ def to_flat(df):
 온라인2 = 온라인2.merge(구매여부, left_on='unique_id', right_on='unique_id')
 온라인2.sort_values(by=['clnt_id','sess_id'], inplace=True)
 온라인2.reset_index(drop=True, inplace=True)
-features = 온라인2.columns[1:-3]
+
 
 import tensorflow as tf
 from sklearn.preprocessing import LabelEncoder
@@ -112,8 +112,8 @@ def make_padding_and_oversample1(X, Y):
 idx = list(pd.Series(idx3) - pd.Series(idx1))
 max(idx), np.percentile(pd.Series(idx),99)
 
-
-온라인_x = 온라인2.iloc[:, 1:-3]
+features = 온라인2.columns[1:-3].fillna(0)
+온라인_x = 온라인2.iloc[:, 1:-3].fillna(0)
 온라인_x = np.array(온라인_x)
 
 # session 당 구매 여부

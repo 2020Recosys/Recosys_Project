@@ -108,8 +108,8 @@ idx = list(pd.Series(idx2) - pd.Series(idx1))
 max(idx), np.percentile(pd.Series(idx),99)
 
 
-features = 온라인2.columns[1:-3]
-온라인_x = 온라인2.iloc[:, 1:-3]
+features = 온라인2.columns[1:-3].fillna(0)
+온라인_x = 온라인2.iloc[:, 1:-3].fillna(0)
 온라인_x = np.array(온라인_x)
 
 # session 당 구매 여부

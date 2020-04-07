@@ -132,11 +132,11 @@ acc_scores = cross_validate(model2, X_resampled, Y_resampled, cv=cv, verbose=2, 
 
 acc_col = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
 acc_result = pd.DataFrame(np.zeros((len(acc_scores), len(acc_col))), columns=acc_col)
-acc_result.iloc[0, 0] = np.mean(acc_scores[0]['test_accuracy']) 
-acc_result.iloc[0, 1] = np.mean(acc_scores[0]['test_f1'])
-acc_result.iloc[0, 2] = np.mean(acc_scores[0]['test_precision'])
-acc_result.iloc[0, 3] = np.mean(acc_scores[0]['test_recall'])
-  
+acc_result.iloc[0, 0] = np.mean(acc_scores['test_accuracy'])
+acc_result.iloc[0, 1] = np.mean(acc_scores['test_f1'])
+acc_result.iloc[0, 2] = np.mean(acc_scores['test_precision'])
+acc_result.iloc[0, 3] = np.mean(acc_scores['test_recall'])
+
 acc_result.to_csv('C:/Users/JKKIM/Desktop/Recommender/온라인_전처리_final_32columns/온라인_2-1.csv', encoding='utf-8')
 
 

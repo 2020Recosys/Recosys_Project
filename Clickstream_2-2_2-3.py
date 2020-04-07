@@ -50,6 +50,7 @@ def to_flat(df):
 #온라인 = pd.merge(온라인, 구매여부1, left_on = ['clnt_id', 'sess_id'], right_on = ['clnt_id', 'sess_id'])
 온라인2 = 온라인2.merge(구매여부, left_on='unique_id', right_on='unique_id')
 온라인2.sort_values(by=['clnt_id','sess_id'], inplace=True)
+온라인2.reset_index(drop=True, inplace=True)
 features = 온라인2.columns[1:-3]
 
 import tensorflow as tf

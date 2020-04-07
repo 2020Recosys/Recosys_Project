@@ -40,10 +40,10 @@ def to_flat(df):
 온라인2 = to_flat(온라인2)
 온라인2 = 온라인2.merge(구매여부, left_on='unique_id', right_on='unique_id')
 온라인2.sort_values(by=['clnt_id','sess_id'], inplace=True)
-
+온라인2.reset_index(drop=True, inplace=True)
 
 #온라인2.to_csv('D:/Cheil/온라인_전처리_flat.csv', encoding='utf-8')
-
+#온라인2 = pd.read_csv('D:/Cheil/온라인_전처리_flat.csv', encoding='utf-8')
 import tensorflow as tf
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
@@ -115,7 +115,7 @@ features = 온라인2.columns[1:-3]
 # session 당 구매 여부
 온라인_y = 온라인2.buy
 
-X_padded, X_resampled, Y_resampled = make_padding_and_oversample1(온라인_x, 온라인_y)
+X_resampled, Y_resampled = make_padding_and_oversample1(온라인_x, 온라인_y)
 
 def dnn_models():
     dnn_model = Sequential()
@@ -265,32 +265,17 @@ def to_flat(df):
 
 
 def make_padding_and_oversample2(X, Y, length=350):
-    #X = np.array(온라인_x1)
-    #Y = 온라인_y1
-    #Y2 = [[Y[y_value], X[y_value][-1]] for y_value in range(len(Y))]
-    #length= 1
     X_flat = to_flat(pd.DataFrame(X, columns=온라인2.columns))
-    #a = X_flat1.iloc[:200, :]
-    #a1 = 구매여부2.iloc[:200, :]
     print("to_flat 완료")
     X_flat1 = X_flat.merge(구매여부2, left_on='unique_id', right_on='unique_id', how='left')
-    #X_flat2 = X_flat1[X_flat1.isna().any(axis=1)].iloc[:, 0].to_list()
     X_flat1 = X_flat1.dropna()
-    #X_flat1 = X_flat1.iloc[:, :-1]
-    
-    #Y = [[y_value[0], int(y_value[1].split('_')[0]), int(y_value[1].split('_')[1])] for y_index, y_value in enumerate(Y2) if y_value[1] not in X_flat2]
-    #Y3 = pd.DataFrame(Y, columns=['buy', 'clnt_id', 'sess_id'])
-    #Y3.sort_values(by=['clnt_id','sess_id'], inplace=True)
-    #Y = Y3.iloc[:, 0].to_list()
     X_flat1.sort_values(by=['clnt_id','sess_id'], inplace=True)
     Y = X_flat1.buy.astype('int').to_list()
-    #X_flat2 = X_flat1.copy()
     X_flat1 = X_flat1.iloc[:, 1:-3]
     
     smote = SMOTE(random_state=0)
     X_resampled, Y_resampled = smote.fit_resample(X_flat1, Y)
     print("smote 완료")
-    #X_resampled = X_resampled.reshape(X_resampled.shape[0], max_len, X_padding.shape[2])
     return np.array(X_resampled), Y_resampled
 
 def dnn_models1():

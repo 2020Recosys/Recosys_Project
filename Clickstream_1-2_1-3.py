@@ -1,4 +1,4 @@
-## 1-2. 현재 세션(1개)의 모든 클릭 로그를 대상으로 MLP, Gaussian Naive Bayes, Decision Tree, XGBoost, Logistic Regression, Linear SVM을 
+## 1-2. 현재 세션(1개)의 모든 클릭 로그를 대상으로 MLP, Gaussian Naive Bayes, Decision Tree, XGBoost, Logistic Regression, Linear SVM을
 # 사용해서 구매 예측  [예린]
 import pandas as pd
 import numpy as np
@@ -7,7 +7,7 @@ from tqdm import tqdm_notebook
 import itertools
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-온라인 = pd.read_csv('C:/Users/JKKIM/Desktop/Recommender/온라인_전처리_final_32columns/온라인_전처리_final_32columns.csv', encoding='utf-8')
+온라인 = pd.read_csv('온라인_전처리_final_32columns.csv', encoding='utf-8')
 온라인 = 온라인.sort_values(['clnt_id','sess_id','hit_seq']).reset_index(drop=True)
 
 온라인['unique_id'] = list(map(lambda x,y: str(x)+'_'+str(y), 온라인.clnt_id, 온라인.sess_id))
@@ -115,7 +115,7 @@ features = 온라인2.columns[1:-3]
 # session 당 구매 여부
 온라인_y = 온라인2.buy
 
-X_padded, X_resampled, Y_resampled = make_padding_and_oversample1(온라인_x, 온라인_y)
+X_resampled, Y_resampled = make_padding_and_oversample1(온라인_x, 온라인_y)
 
 def dnn_models():
     dnn_model = Sequential()
@@ -159,21 +159,21 @@ acc_scores6 = cross_validate(clf6, X_resampled, Y_resampled, cv=cv, verbose=3, n
 
 acc_scores = [acc_scores1, acc_scores2, acc_scores3, acc_scores4, acc_scores5, acc_scores6]
 acc_col = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
-        
+
 acc_result = pd.DataFrame(np.zeros((len(acc_scores), len(acc_col))), columns=acc_col)
 for t_s in range(len(acc_scores)) :
-    acc_result.iloc[t_s, 0] = np.mean(acc_scores[t_s][0]['test_accuracy']) 
+    acc_result.iloc[t_s, 0] = np.mean(acc_scores[t_s][0]['test_accuracy'])
     acc_result.iloc[t_s, 1] = np.mean(acc_scores[t_s][0]['test_f1'])
     acc_result.iloc[t_s, 2] = np.mean(acc_scores[t_s][0]['test_precision'])
     acc_result.iloc[t_s, 3] = np.mean(acc_scores[t_s][0]['test_recall'])
-acc_result.to_csv('C:/Users/JKKIM/Desktop/Recommender/온라인_전처리_final_32columns/온라인_1-2.csv', encoding='utf-8')
+acc_result.to_csv('온라인_1-2.csv', encoding='utf-8')
 
 
 
 
 
 
-## 1-3. 현재 세션 앞 부분의 1~10개의 클릭 로그를 대상으로 구매 예측을 할 때, MLP, Gaussian Naive Bayes, Decision Tree, XGBoost, 
+## 1-3. 현재 세션 앞 부분의 1~10개의 클릭 로그를 대상으로 구매 예측을 할 때, MLP, Gaussian Naive Bayes, Decision Tree, XGBoost,
 # Logistic Regression, Linear SVM을 사용해서 구매 예측  [예린]
 import pandas as pd
 import numpy as np
@@ -205,7 +205,7 @@ from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, cro
 from sklearn.metrics import precision_recall_fscore_support as score
 from keras.wrappers.scikit_learn import KerasClassifier
 
-온라인 = pd.read_csv('C:/Users/JKKIM/Desktop/Recommender/온라인_전처리_final_32columns/온라인_전처리_final_32columns.csv', encoding='utf-8')
+온라인 = pd.read_csv('온라인_전처리_final_32columns.csv', encoding='utf-8')
 온라인 = 온라인.sort_values(['clnt_id','sess_id','hit_seq']).reset_index(drop=True)
 
 온라인['unique_id'] = list(map(lambda x,y: str(x)+'_'+str(y), 온라인.clnt_id, 온라인.sess_id))
@@ -277,7 +277,7 @@ def make_padding_and_oversample2(X, Y, length=350):
     #X_flat2 = X_flat1[X_flat1.isna().any(axis=1)].iloc[:, 0].to_list()
     X_flat1 = X_flat1.dropna()
     #X_flat1 = X_flat1.iloc[:, :-1]
-    
+
     #Y = [[y_value[0], int(y_value[1].split('_')[0]), int(y_value[1].split('_')[1])] for y_index, y_value in enumerate(Y2) if y_value[1] not in X_flat2]
     #Y3 = pd.DataFrame(Y, columns=['buy', 'clnt_id', 'sess_id'])
     #Y3.sort_values(by=['clnt_id','sess_id'], inplace=True)
@@ -286,7 +286,7 @@ def make_padding_and_oversample2(X, Y, length=350):
     Y = X_flat1.buy.astype('int').to_list()
     #X_flat2 = X_flat1.copy()
     X_flat1 = X_flat1.iloc[:, 1:-3]
-    
+
     smote = SMOTE(random_state=0)
     X_resampled, Y_resampled = smote.fit_resample(X_flat1, Y)
     print("smote 완료")
@@ -319,39 +319,39 @@ total_scores_6 = []
 
 #온라인2_col = 온라인2.columns
 #hitseq_num = 1
-for hitseq_num in tqdm_notebook(range(1,3)):    
+for hitseq_num in tqdm_notebook(range(1,3)):
     온라인_x1, 온라인_y1 = [], []
     for i,j,k in zip(idx, 온라인_x, 온라인_y):
         if i >= hitseq_num and j[0] <= hitseq_num :
             온라인_x1.append(j)
             온라인_y1.append(k)
-            
+
     X_resampled1, Y_resampled1 = make_padding_and_oversample2(np.array(온라인_x1), 온라인_y1, length= int(hitseq_num))
     #X_resampled1, Y_resampled1 = np.array(X_resampled), Y_resampled
     #X_resampled.columns
     #a = X_resampled1[:200, :]
     #a = X_resampled.iloc[:200, :]
-    
+
     a_scores = cross_validate(clf, X_resampled1, Y_resampled1, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
     total_scores_1.append(a_scores)
-    
+
     a_scores = cross_validate(clf2, X_resampled1, Y_resampled1, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
     total_scores_2.append(a_scores)
-    
+
     a_scores = cross_validate(clf3, X_resampled1, Y_resampled1, cv=cv, verbose=2, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
     total_scores_3.append(a_scores)
-    
+
     a_scores = cross_validate(clf4, X_resampled1, Y_resampled1, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
     total_scores_4.append(a_scores)
-    
+
     a_scores = cross_validate(clf5, X_resampled1, Y_resampled1, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
     total_scores_5.append(a_scores)
-    
+
     a_scores = cross_validate(clf6, X_resampled1, Y_resampled1, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
     total_scores_6.append(a_scores)
@@ -365,22 +365,20 @@ for t_c in total_col :
     total_col2.append(t_c + '_' + str(z))
     if t_c == 'Recall' :
         z += 1
-        
+
 total_result = pd.DataFrame(np.zeros((len(total_scores), len(total_col2))), columns=total_col2)
 for t_s in range(len(total_scores)) :
     z = 0
     for t_s2 in range(len(total_scores[t_s])) :
         total_result.iloc[t_s, z] = np.mean(total_scores[t_s][t_s2]['test_accuracy'])
         z += 1
-        
+
         total_result.iloc[t_s, z] = np.mean(total_scores[t_s][t_s2]['test_f1'])
         z += 1
-        
+
         total_result.iloc[t_s, z] = np.mean(total_scores[t_s][t_s2]['test_precision'])
         z += 1
-        
+
         total_result.iloc[t_s, z] = np.mean(total_scores[t_s][t_s2]['test_recall'])
         z += 1
-total_result.to_csv('C:/Users/JKKIM/Desktop/Recommender/온라인_전처리_final_32columns/온라인_1-3.csv', encoding='utf-8')     
-        
-    
+total_result.to_csv('온라인_1-3.csv', encoding='utf-8')

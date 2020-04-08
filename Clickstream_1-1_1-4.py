@@ -6,7 +6,7 @@ from tqdm import tqdm_notebook
 import itertools
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-온라인 = pd.read_csv('C:/Users/JKKIM/Desktop/Recommender/온라인_전처리_final_32columns/온라인_전처리_final_32columns.csv', encoding='utf-8')
+온라인 = pd.read_csv('./온라인_전처리_final_32columns.csv', encoding='utf-8')
 온라인 = 온라인.sort_values(['clnt_id','sess_id','hit_seq']).reset_index(drop=True)
 
 온라인['unique_id'] = list(map(lambda x,y: str(x)+'_'+str(y), 온라인.clnt_id, 온라인.sess_id))
@@ -20,7 +20,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 구매여부1 = pd.DataFrame()
 for id in tqdm_notebook(구매여부['clnt_id'].unique()):
-    temp = 구매여부[구매여부['clnt_id'] == id]
+    temp = 구매여부[구매여부['clnt_id'] == id].copy()
     temp.buy = temp.buy.shift(-1)
     temp = temp.dropna(axis = 0)
     구매여부1 = pd.concat([구매여부1, temp])
@@ -83,7 +83,7 @@ idx2 = idx1[1:] + [len(온라인)]
 온라인_x = []
 for i, j in tqdm_notebook(zip(idx1, idx2), total=len(idx1)):
     온라인_x.append(온라인.iloc[i:j, 3:-2].values)
-    
+
 
 온라인_x = np.array(온라인_x)
 
@@ -131,15 +131,16 @@ model2 = KerasClassifier(build_fn=models, epochs=25, batch_size=1000, verbose=1)
 cv = StratifiedKFold(10, shuffle=True, random_state=42)
 acc_scores = cross_validate(model2, X_resampled, Y_resampled, cv=cv, verbose=2, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
+print(acc_scores)
 
 acc_col = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
 acc_result = pd.DataFrame(np.zeros((len(acc_scores), len(acc_col))), columns=acc_col)
-acc_result.iloc[0, 0] = np.mean(acc_scores[0]['test_accuracy']) 
-acc_result.iloc[0, 1] = np.mean(acc_scores[0]['test_f1'])
-acc_result.iloc[0, 2] = np.mean(acc_scores[0]['test_precision'])
-acc_result.iloc[0, 3] = np.mean(acc_scores[0]['test_recall'])
-  
-acc_result.to_csv('C:/Users/JKKIM/Desktop/Recommender/온라인_전처리_final_32columns/온라인_1-1.csv', encoding='utf-8')
+acc_result.iloc[0, 0] = np.mean(acc_scores['test_accuracy'])
+acc_result.iloc[0, 1] = np.mean(acc_scores['test_f1'])
+acc_result.iloc[0, 2] = np.mean(acc_scores['test_precision'])
+acc_result.iloc[0, 3] = np.mean(acc_scores['test_recall'])
+
+acc_result.to_csv('온라인_1-1.csv', encoding='utf-8')
 
 
 
@@ -158,7 +159,7 @@ from tqdm import tqdm_notebook
 import itertools
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-온라인 = pd.read_csv('C:/Users/JKKIM/Desktop/Recommender/온라인_전처리_final_32columns/온라인_전처리_final_32columns.csv', encoding='utf-8')
+온라인 = pd.read_csv('./온라인_전처리_final_32columns.csv', encoding='utf-8')
 온라인 = 온라인.sort_values(['clnt_id','sess_id','hit_seq']).reset_index(drop=True)
 
 온라인['unique_id'] = list(map(lambda x,y: str(x)+'_'+str(y), 온라인.clnt_id, 온라인.sess_id))
@@ -172,7 +173,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 구매여부1 = pd.DataFrame()
 for id in tqdm_notebook(구매여부['clnt_id'].unique()):
-    temp = 구매여부[구매여부['clnt_id'] == id]
+    temp = 구매여부[구매여부['clnt_id'] == id].copy()
     temp.buy = temp.buy.shift(-1)
     temp = temp.dropna(axis = 0)
     구매여부1 = pd.concat([구매여부1, temp])
@@ -235,7 +236,7 @@ idx2 = idx1[1:] + [len(온라인)]
 온라인_x = []
 for i, j in tqdm_notebook(zip(idx1, idx2), total=len(idx1)):
     온라인_x.append(온라인.iloc[i:j, 3:-2].values)
-    
+
 
 온라인_x = np.array(온라인_x)
 
@@ -281,10 +282,10 @@ for hitseq_num in tqdm_notebook(range(1,11)):
         if i >= hitseq_num:
             온라인_x1.append(j)
             온라인_y1.append(k)
-            
+
     print("%d번째 padding 시작" % hitseq_num)
     X_padded1, X_resampled1, Y_resampled1 = make_padding_and_oversample(np.array(온라인_x1), np.array(온라인_y1), length=int(hitseq_num))
-    
+
     print("%d번째 train/testp split 시작" % hitseq_num)
     #X_train1, X_test1, y_train1, y_test1 = train_test_split(X_resampled1, Y_resampled1, test_size=0.3, random_state=42)
     model2 = KerasClassifier(build_fn=models1, epochs=25, batch_size=1000, verbose=1)
@@ -297,15 +298,9 @@ for hitseq_num in tqdm_notebook(range(1,11)):
 total_col = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
 total_result = pd.DataFrame(np.zeros((10, len(total_col))), columns=total_col)
 for t_s in range(len(total_scores_1_10)) :
-    total_result.iloc[t_s, 0] = np.mean(total_scores_1_10[t_s]['test_accuracy']) 
+    total_result.iloc[t_s, 0] = np.mean(total_scores_1_10[t_s]['test_accuracy'])
     total_result.iloc[t_s, 1] = np.mean(total_scores_1_10[t_s]['test_f1'])
     total_result.iloc[t_s, 2] = np.mean(total_scores_1_10[t_s]['test_precision'])
     total_result.iloc[t_s, 3] = np.mean(total_scores_1_10[t_s]['test_recall'])
-  
-total_result.to_csv('C:/Users/JKKIM/Desktop/Recommender/온라인_전처리_final_32columns/온라인_2-4.csv', encoding='utf-8')
 
-
-
-
-
-
+total_result.to_csv('온라인_2-4.csv', encoding='utf-8')

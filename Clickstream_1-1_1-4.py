@@ -140,7 +140,11 @@ acc_result.iloc[0, 1] = np.mean(acc_scores['test_f1'])
 acc_result.iloc[0, 2] = np.mean(acc_scores['test_precision'])
 acc_result.iloc[0, 3] = np.mean(acc_scores['test_recall'])
 
+<<<<<<< HEAD
 acc_result.to_csv('온라인_1-1.csv', encoding='utf-8')
+=======
+acc_result.to_csv('C:/Users/JKKIM/Desktop/Recommender/온라인_전처리_final_32columns/온라인_1-1.csv', encoding='utf-8')
+>>>>>>> 847fee7f0c3714d6e517f539484dfbff890892e1
 
 
 

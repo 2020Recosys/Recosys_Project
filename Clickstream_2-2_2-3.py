@@ -241,7 +241,6 @@ for i, j in tqdm_notebook(zip(idx1, idx2), total=len(idx1)):
 
 
 온라인_x = np.array(온라인2)
-온라인_y = 온라인2.buy
 
 
 idx = list(pd.Series(idx2) - pd.Series(idx1))
@@ -273,7 +272,7 @@ def to_flat(df):
     return flat_df
 
 
-def make_padding_and_oversample2(X, Y, length=350):
+def make_padding_and_oversample2(X, length=350):
     X_flat = to_flat(pd.DataFrame(X, columns=온라인2.columns))
     print("to_flat 완료")
     X_flat1 = X_flat.merge(구매여부, left_on='unique_id', right_on='unique_id', how='left')
@@ -311,20 +310,14 @@ total_scores_4 = []
 total_scores_5 = []
 total_scores_6 = []
 
-#온라인2_col = 온라인2.columns
-#hitseq_num = 1
-for hitseq_num in tqdm_notebook(range(1,3)):    
-    온라인_x1, 온라인_y1 = [], []
+
+for hitseq_num in tqdm_notebook(range(1,11)):    
+    온라인_x1 = []
     for i,j,k in zip(idx, 온라인_x, 온라인_y):
         if i >= hitseq_num and j[0] <= hitseq_num :
             온라인_x1.append(j)
-            온라인_y1.append(k)
             
-    X_resampled1, Y_resampled1 = make_padding_and_oversample2(np.array(온라인_x1), 온라인_y1, length= int(hitseq_num))
-    #X_resampled1, Y_resampled1 = np.array(X_resampled), Y_resampled
-    #X_resampled.columns
-    #a = X_resampled1[:200, :]
-    #a = X_resampled.iloc[:200, :]
+    X_resampled1, Y_resampled1 = make_padding_and_oversample2(np.array(온라인_x1), length= int(hitseq_num))
     
     a_scores = cross_validate(clf, X_resampled1, Y_resampled1, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])

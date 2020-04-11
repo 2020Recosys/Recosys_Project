@@ -230,7 +230,6 @@ g = 구매여부2.groupby('clnt_id')
 온라인2.drop(['clnt_id', 'sess_id', 'trans_id', 'buy'], axis=1, inplace=True)
 
 온라인_x = np.array(온라인2)
-온라인_y = 온라인2.buy
 
 # 각 clnt_id별 session이 바뀌는 지점 index 저장
 idx1 = 온라인2.unique_id.drop_duplicates().index.tolist()
@@ -264,33 +263,18 @@ def to_flat(df):
     return flat_df
 
 
-def make_padding_and_oversample2(X, Y, length=350):
-    #X = np.array(온라인_x1)
-    #Y = 온라인_y1
-    #Y2 = [[Y[y_value], X[y_value][-1]] for y_value in range(len(Y))]
-    #length= 1
+def make_padding_and_oversample2(X, length=350):
     X_flat = to_flat(pd.DataFrame(X, columns=온라인2.columns))
-    #a = X_flat1.iloc[:200, :]
-    #a1 = 구매여부2.iloc[:200, :]
     print("to_flat 완료")
     X_flat1 = X_flat.merge(구매여부2, left_on='unique_id', right_on='unique_id', how='left')
-    #X_flat2 = X_flat1[X_flat1.isna().any(axis=1)].iloc[:, 0].to_list()
     X_flat1 = X_flat1.dropna()
-    #X_flat1 = X_flat1.iloc[:, :-1]
-
-    #Y = [[y_value[0], int(y_value[1].split('_')[0]), int(y_value[1].split('_')[1])] for y_index, y_value in enumerate(Y2) if y_value[1] not in X_flat2]
-    #Y3 = pd.DataFrame(Y, columns=['buy', 'clnt_id', 'sess_id'])
-    #Y3.sort_values(by=['clnt_id','sess_id'], inplace=True)
-    #Y = Y3.iloc[:, 0].to_list()
     X_flat1.sort_values(by=['clnt_id','sess_id'], inplace=True)
     Y = X_flat1.buy.astype('int').to_list()
-    #X_flat2 = X_flat1.copy()
     X_flat1 = X_flat1.iloc[:, 1:-3]
 
     smote = SMOTE(random_state=0)
     X_resampled, Y_resampled = smote.fit_resample(X_flat1, Y)
     print("smote 완료")
-    #X_resampled = X_resampled.reshape(X_resampled.shape[0], max_len, X_padding.shape[2])
     return np.array(X_resampled), Y_resampled
 
 def dnn_models1():
@@ -319,18 +303,13 @@ total_scores_6 = []
 
 #온라인2_col = 온라인2.columns
 #hitseq_num = 1
-for hitseq_num in tqdm_notebook(range(1,3)):
-    온라인_x1, 온라인_y1 = [], []
-    for i,j,k in zip(idx, 온라인_x, 온라인_y):
+for hitseq_num in tqdm_notebook(range(1,11)):
+    온라인_x1 = []
+    for i,j in zip(idx, 온라인_x):
         if i >= hitseq_num and j[0] <= hitseq_num :
             온라인_x1.append(j)
-            온라인_y1.append(k)
 
-    X_resampled1, Y_resampled1 = make_padding_and_oversample2(np.array(온라인_x1), 온라인_y1, length= int(hitseq_num))
-    #X_resampled1, Y_resampled1 = np.array(X_resampled), Y_resampled
-    #X_resampled.columns
-    #a = X_resampled1[:200, :]
-    #a = X_resampled.iloc[:200, :]
+    X_resampled1, Y_resampled1 = make_padding_and_oversample2(np.array(온라인_x1), length= int(hitseq_num))
 
     a_scores = cross_validate(clf, X_resampled1, Y_resampled1, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])

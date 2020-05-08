@@ -7,7 +7,7 @@ from tqdm import tqdm_notebook
 import itertools
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-온라인 = pd.read_csv('온라인_전처리_final_32columns.csv', encoding='utf-8')
+온라인 = pd.read_csv('./온라인_전처리_final_32columns.csv', encoding='utf-8')
 온라인 = 온라인.sort_values(['clnt_id','sess_id','hit_seq']).reset_index(drop=True)
 
 온라인['unique_id'] = list(map(lambda x,y: str(x)+'_'+str(y), 온라인.clnt_id, 온라인.sess_id))
@@ -67,7 +67,6 @@ from keras import backend as K
 
 '''
 import os
-
 import keras.backend.tensorflow_backend as KTF
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -108,7 +107,6 @@ idx = list(pd.Series(idx2) - pd.Series(idx1))
 max(idx), np.percentile(pd.Series(idx),99)
 
 
-features = 온라인2.columns[1:-3]
 온라인_x = 온라인2.iloc[:, 1:-3]
 온라인_x = np.array(온라인_x)
 
@@ -205,7 +203,7 @@ from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, cro
 from sklearn.metrics import precision_recall_fscore_support as score
 from keras.wrappers.scikit_learn import KerasClassifier
 
-온라인 = pd.read_csv('온라인_전처리_final_32columns.csv', encoding='utf-8')
+온라인 = pd.read_csv('./온라인_전처리_final_32columns.csv', encoding='utf-8')
 온라인 = 온라인.sort_values(['clnt_id','sess_id','hit_seq']).reset_index(drop=True)
 
 온라인['unique_id'] = list(map(lambda x,y: str(x)+'_'+str(y), 온라인.clnt_id, 온라인.sess_id))
@@ -235,7 +233,7 @@ g = 구매여부2.groupby('clnt_id')
 idx1 = 온라인2.unique_id.drop_duplicates().index.tolist()
 idx2 = idx1[1:] + [len(온라인2)]
 idx = list(pd.Series(idx2) - pd.Series(idx1))
-max(idx), np.percentile(pd.Series(idx),99)
+
 
 def recall_m(y_true, y_pred):
         true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
@@ -263,12 +261,18 @@ def to_flat(df):
     return flat_df
 
 
-def make_padding_and_oversample2(X, length=350):
+def make_padding_and_oversample2(X, length=350) :
+    # 머신러닝 분류기에 데이터를 집어넣으려면, flat시켜야 됨
     X_flat = to_flat(pd.DataFrame(X, columns=온라인2.columns))
     print("to_flat 완료")
+    
     X_flat1 = X_flat.merge(구매여부2, left_on='unique_id', right_on='unique_id', how='left')
+    
+    # 다음 세션에 구매가 일어났는지를 예측해야 되기 때문에 해당 세션(행)이 각 unique_id의 마지막 세션이면 어쩔 수 없이 제거함
     X_flat1 = X_flat1.dropna()
     X_flat1.sort_values(by=['clnt_id','sess_id'], inplace=True)
+    
+    # 종속변수(구매여부) 추출
     Y = X_flat1.buy.astype('int').to_list()
     X_flat1 = X_flat1.iloc[:, 1:-3]
 
@@ -276,6 +280,7 @@ def make_padding_and_oversample2(X, length=350):
     X_resampled, Y_resampled = smote.fit_resample(X_flat1, Y)
     print("smote 완료")
     return np.array(X_resampled), Y_resampled
+    
 
 def dnn_models1():
     dnn_model = Sequential()
@@ -301,14 +306,28 @@ total_scores_4 = []
 total_scores_5 = []
 total_scores_6 = []
 
-#온라인2_col = 온라인2.columns
 #hitseq_num = 1
 for hitseq_num in tqdm_notebook(range(1,11)):
     온라인_x1 = []
-    for i,j in zip(idx, 온라인_x):
-        if i >= hitseq_num and j[0] <= hitseq_num :
-            온라인_x1.append(j)
-
+    for idx_index, idx_value in enumerate(idx) :
+        # hitseq_num개 이상의 클릭 로그를 가진 세션만 추출
+        if idx_value >= hitseq_num :
+            # 구매여부 변수에서 unique한 유저 아이디와 세션 아이디 하나를 가지고 옴
+            구매여부_idx = 구매여부.iloc[idx_index, :-1]
+            구매여부_idx = str(구매여부_idx[0]) + '_' + str(구매여부_idx[1])
+            
+            # 위에서 가지고 온 유저 아이디와 세션 아이디가 일치하는 데이터만 추출
+            온라인_x_partial = 온라인[온라인['unique_id'] == 구매여부_idx].iloc[:, 3:-1]
+            
+            # hitseq_num개 이상의 클릭 로그를 가진 세션의 클릭 로그 중에서 hitseq_num까지의 클릭 로그만 사용(추출)
+            # hitseq_num개 이후의 클릭 로그는 버림
+            온라인_x_partial = np.array(온라인_x_partial[온라인_x_partial['hit_seq'] <= hitseq_num])
+            for 온라인_x_value in 온라인_x_partial :
+                온라인_x1.append(온라인_x_value)
+    
+    #a1 = 온라인_x1[:10]
+    #b1 = idx[:10]
+    
     X_resampled1, Y_resampled1 = make_padding_and_oversample2(np.array(온라인_x1), length= int(hitseq_num))
 
     a_scores = cross_validate(clf, X_resampled1, Y_resampled1, cv=cv, verbose=3, n_jobs=None, return_train_score=True,

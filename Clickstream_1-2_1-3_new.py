@@ -65,18 +65,6 @@ import xgboost as xgb
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from keras import backend as K
 
-'''
-import os
-import keras.backend.tensorflow_backend as KTF
-
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-config = tf.compat.v1.ConfigProto()
-config.gpu_options.allow_growth=True
-session = tf.compat.v1.Session(config=config)
-
-KTF.set_session(session)
-'''
-
 
 def recall_m(y_true, y_pred):
         true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
@@ -95,10 +83,6 @@ def f1_m(y_true, y_pred):
     recall = recall_m(y_true, y_pred)
     return 2*((precision*recall)/(precision+recall+K.epsilon()))
 
-def make_padding_and_oversample1(X, Y):
-    smote = SMOTE(random_state=0)
-    X_resampled, Y_resampled = smote.fit_resample(X, Y)
-    return X_resampled, Y_resampled
 
 # 각 clnt_id별 session이 바뀌는 지점 index 저장
 idx1 = 온라인2.unique_id.drop_duplicates().index.tolist()
@@ -113,7 +97,8 @@ max(idx), np.percentile(pd.Series(idx),99)
 # session 당 구매 여부
 온라인_y = 온라인2.buy
 
-X_resampled, Y_resampled = make_padding_and_oversample1(온라인_x, 온라인_y)
+X_resampled = 온라인_x
+Y_resampled = 온라인_y
 
 def dnn_models():
     dnn_model = Sequential()
@@ -127,30 +112,31 @@ def dnn_models():
 from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, cross_val_predict, cross_validate
 from sklearn.metrics import precision_recall_fscore_support as score
 from keras.wrappers.scikit_learn import KerasClassifier
+from imblearn.pipeline import Pipeline, make_pipeline
 
 cv = StratifiedKFold(10, shuffle=True, random_state=42)
 
-clf = GaussianNB()
+clf = make_pipeline(SMOTE(random_state=0), GaussianNB())
 acc_scores1 = cross_validate(clf, X_resampled, Y_resampled, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
-clf2 = DecisionTreeClassifier(random_state=0)
+clf2 = make_pipeline(SMOTE(random_state=0), DecisionTreeClassifier(random_state=0))
 acc_scores2 = cross_validate(clf2, X_resampled, Y_resampled, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
-clf3 = xgb.XGBClassifier(learning_rate = 0.05, n_estimators=300, max_depth=2, verbosity=2, random_state=0)
+clf3 = make_pipeline(SMOTE(random_state=0), xgb.XGBClassifier(learning_rate = 0.05, n_estimators=300, max_depth=2, verbosity=2, random_state=0))
 acc_scores3 = cross_validate(clf3, X_resampled, Y_resampled, cv=cv, verbose=2, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
-clf4 = LogisticRegression(max_iter=1000, random_state=0)
+clf4 = make_pipeline(SMOTE(random_state=0), LogisticRegression(max_iter=1000, random_state=0))
 acc_scores4 = cross_validate(clf4, X_resampled, Y_resampled, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
-clf5 = LinearSVC(random_state=0)
+clf5 = make_pipeline(SMOTE(random_state=0), LinearSVC(random_state=0))
 acc_scores5 = cross_validate(clf5, X_resampled, Y_resampled, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
-clf6 = KerasClassifier(build_fn=dnn_models, epochs=25, batch_size=1000, verbose=1)
+clf6 = make_pipeline(SMOTE(random_state=0), KerasClassifier(build_fn=dnn_models, epochs=25, batch_size=1000, verbose=1))
 acc_scores6 = cross_validate(clf6, X_resampled, Y_resampled, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
@@ -202,6 +188,8 @@ from keras import backend as K
 from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, cross_val_predict, cross_validate
 from sklearn.metrics import precision_recall_fscore_support as score
 from keras.wrappers.scikit_learn import KerasClassifier
+from imblearn.pipeline import Pipeline, make_pipeline
+
 
 온라인 = pd.read_csv('./온라인_전처리_final_32columns.csv', encoding='utf-8')
 온라인 = 온라인.sort_values(['clnt_id','sess_id','hit_seq']).reset_index(drop=True)
@@ -261,7 +249,7 @@ def to_flat(df):
     return flat_df
 
 
-def make_padding_and_oversample2(X, length=350) :
+def make_padding_and_oversample2(X) :
     # 머신러닝 분류기에 데이터를 집어넣으려면, flat시켜야 됨
     X_flat = to_flat(pd.DataFrame(X, columns=온라인2.columns))
     print("to_flat 완료")
@@ -275,11 +263,8 @@ def make_padding_and_oversample2(X, length=350) :
     # 종속변수(구매여부) 추출
     Y = X_flat1.buy.astype('int').to_list()
     X_flat1 = X_flat1.iloc[:, 1:-3]
-
-    smote = SMOTE(random_state=0)
-    X_resampled, Y_resampled = smote.fit_resample(X_flat1, Y)
-    print("smote 완료")
-    return np.array(X_resampled), Y_resampled
+    X_flat1 = X_flat1.fillna(0)
+    return np.array(X_flat1), Y
     
 
 def dnn_models1():
@@ -292,12 +277,12 @@ def dnn_models1():
 
 
 cv = StratifiedKFold(10, shuffle=True, random_state=42)
-clf = GaussianNB()
-clf2 = DecisionTreeClassifier(random_state=0)
-clf3 = xgb.XGBClassifier(learning_rate = 0.05, n_estimators=300, max_depth=3, verbosity=2, random_state=0)
-clf4 = LogisticRegression(max_iter=1000, random_state=0)
-clf5 = LinearSVC(random_state=0)
-clf6 = KerasClassifier(build_fn=dnn_models1, epochs=25, batch_size=1000, verbose=1)
+clf = make_pipeline(SMOTE(random_state=0), GaussianNB())
+clf2 = make_pipeline(SMOTE(random_state=0), DecisionTreeClassifier(random_state=0))
+clf3 = make_pipeline(SMOTE(random_state=0), xgb.XGBClassifier(learning_rate = 0.05, n_estimators=300, max_depth=3, verbosity=2, random_state=0))
+clf4 = make_pipeline(SMOTE(random_state=0), LogisticRegression(max_iter=1000, random_state=0))
+clf5 = make_pipeline(SMOTE(random_state=0), LinearSVC(random_state=0))
+clf6 = make_pipeline(SMOTE(random_state=0), KerasClassifier(build_fn=dnn_models1, epochs=25, batch_size=1000, verbose=1))
 
 total_scores_1 = []
 total_scores_2 = []
@@ -328,7 +313,7 @@ for hitseq_num in tqdm_notebook(range(1,11)):
     #a1 = 온라인_x1[:10]
     #b1 = idx[:10]
     
-    X_resampled1, Y_resampled1 = make_padding_and_oversample2(np.array(온라인_x1), length= int(hitseq_num))
+    X_resampled1, Y_resampled1 = make_padding_and_oversample2(np.array(온라인_x1))
 
     a_scores = cross_validate(clf, X_resampled1, Y_resampled1, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])

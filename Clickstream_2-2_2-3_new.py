@@ -53,13 +53,13 @@ for i, j in tqdm_notebook(zip(idx1, idx2), total=len(idx1)):
         idx3.append(j)
 idx = list(pd.Series(idx3) - pd.Series(idx1))
 
-온라인_x = []
+온라인2 = []
 for i, j in tqdm_notebook(zip(idx1, idx3), total=len(idx1)):
     for k in range(i, j) :
-        온라인_x.append(온라인.iloc[k, :])
+        온라인2.append(온라인.iloc[k, :])
 
-온라인_x = pd.DataFrame(온라인_x)
-온라인_x.drop(['clnt_id', 'sess_id', 'trans_id', 'buy'], axis=1, inplace=True)
+온라인2 = pd.DataFrame(온라인2)
+온라인2.drop(['clnt_id', 'sess_id', 'trans_id', 'buy'], axis=1, inplace=True)
 
 
 def recall_m(y_true, y_pred):
@@ -86,29 +86,10 @@ def to_flat(df):
     flat_df.reset_index(inplace=True)
     return flat_df
 
-def make_padding_and_oversample(X) :
-    # 머신러닝 분류기에 데이터를 집어넣으려면, flat시켜야 됨
-    X_flat = to_flat(X)
-    print("to_flat 완료")
-    
-    X_flat1 = X_flat.merge(구매여부, left_on='unique_id', right_on='unique_id', how='left')
-        
-    #X_flat1 = X_flat1.dropna()
-    X_flat1.sort_values(by=['clnt_id','sess_id'], inplace=True)
-    
-    # 종속변수(구매여부) 추출
-    Y = X_flat1.buy.astype('int').to_list()
-    X_flat1 = X_flat1.iloc[:, 1:-3]
 
-    smote = SMOTE(random_state=0)
-    X_flat1 = X_flat1.fillna(0)
-    X_resampled, Y_resampled = smote.fit_resample(X_flat1, Y)
-    print("smote 완료")
-    return np.array(X_resampled), Y_resampled
-
-
-X_resampled, Y_resampled = make_padding_and_oversample1(온라인_x)
-
+온라인2 = to_flat(온라인2)
+온라인2 = 온라인2.merge(구매여부, left_on='unique_id', right_on='unique_id')
+온라인2.sort_values(by=['clnt_id','sess_id'], inplace=True)
 
 
 def dnn_models():
@@ -123,30 +104,36 @@ def dnn_models():
 from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, cross_val_predict, cross_validate
 from sklearn.metrics import precision_recall_fscore_support as score
 from keras.wrappers.scikit_learn import KerasClassifier
+from imblearn.pipeline import Pipeline, make_pipeline
+
+# 종속변수(구매여부) 추출
+Y_resampled = 온라인2.buy.astype('int').to_list()
+X_resampled = np.array(온라인2.iloc[:, 1:-3])
+
 
 cv = StratifiedKFold(10, shuffle=True, random_state=42)
 
-clf = GaussianNB()
+clf = make_pipeline(SMOTE(random_state=0), GaussianNB())
 acc_scores1 = cross_validate(clf, X_resampled, Y_resampled, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
-clf2 = DecisionTreeClassifier(random_state=0)
+clf2 = make_pipeline(SMOTE(random_state=0), DecisionTreeClassifier(random_state=0))
 acc_scores2 = cross_validate(clf2, X_resampled, Y_resampled, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
-clf3 = xgb.XGBClassifier(learning_rate = 0.05, n_estimators=300, max_depth=2, verbosity=2, random_state=0)
+clf3 = make_pipeline(SMOTE(random_state=0), xgb.XGBClassifier(learning_rate = 0.05, n_estimators=300, max_depth=2, verbosity=2, random_state=0))
 acc_scores3 = cross_validate(clf3, X_resampled, Y_resampled, cv=cv, verbose=2, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
-clf4 = LogisticRegression(max_iter=1000, random_state=0)
+clf4 = make_pipeline(SMOTE(random_state=0), LogisticRegression(max_iter=1000, random_state=0))
 acc_scores4 = cross_validate(clf4, X_resampled, Y_resampled, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
-clf5 = LinearSVC(random_state=0)
+clf5 = make_pipeline(SMOTE(random_state=0), LinearSVC(random_state=0))
 acc_scores5 = cross_validate(clf5, X_resampled, Y_resampled, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
-clf6 = KerasClassifier(build_fn=dnn_models, epochs=25, batch_size=1000, verbose=1)
+clf6 = make_pipeline(SMOTE(random_state=0), KerasClassifier(build_fn=dnn_models, epochs=25, batch_size=1000, verbose=1))
 acc_scores6 = cross_validate(clf6, X_resampled, Y_resampled, cv=cv, verbose=3, n_jobs=None, return_train_score=True,
                             return_estimator=True, scoring=['accuracy', 'f1', 'precision', 'recall'])
 
@@ -201,6 +188,7 @@ from keras import backend as K
 from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, cross_val_predict, cross_validate
 from sklearn.metrics import precision_recall_fscore_support as score
 from keras.wrappers.scikit_learn import KerasClassifier
+from imblearn.pipeline import Pipeline, make_pipeline
 
 온라인 = pd.read_csv('./온라인_전처리_final_32columns.csv', encoding='utf-8')
 온라인 = 온라인.sort_values(['clnt_id','sess_id','hit_seq']).reset_index(drop=True)
@@ -269,18 +257,12 @@ def make_padding_and_oversample2(X) :
     print("to_flat 완료")
     
     X_flat1 = X_flat.merge(구매여부, left_on='unique_id', right_on='unique_id', how='left')
-        
-    #X_flat1 = X_flat1.dropna()
     X_flat1.sort_values(by=['clnt_id','sess_id'], inplace=True)
     
     # 종속변수(구매여부) 추출
     Y = X_flat1.buy.astype('int').to_list()
     X_flat1 = X_flat1.iloc[:, 1:-3]
-
-    smote = SMOTE(random_state=0)
-    X_resampled, Y_resampled = smote.fit_resample(X_flat1, Y)
-    print("smote 완료")
-    return np.array(X_resampled), Y_resampled
+    return np.array(X_flat1), Y
 
 def dnn_models1():
     dnn_model = Sequential()
@@ -292,12 +274,12 @@ def dnn_models1():
 
 
 cv = StratifiedKFold(10, shuffle=True, random_state=42)
-clf = GaussianNB()
-clf2 = DecisionTreeClassifier(random_state=0)
-clf3 = xgb.XGBClassifier(learning_rate = 0.05, n_estimators=300, max_depth=3, verbosity=2, random_state=0)
-clf4 = LogisticRegression(max_iter=1000, random_state=0)
-clf5 = LinearSVC(random_state=0)
-clf6 = KerasClassifier(build_fn=dnn_models1, epochs=25, batch_size=1000, verbose=1)
+clf = make_pipeline(SMOTE(random_state=0), GaussianNB())
+clf2 = make_pipeline(SMOTE(random_state=0), DecisionTreeClassifier(random_state=0))
+clf3 = make_pipeline(SMOTE(random_state=0), xgb.XGBClassifier(learning_rate = 0.05, n_estimators=300, max_depth=3, verbosity=2, random_state=0))
+clf4 = make_pipeline(SMOTE(random_state=0), LogisticRegression(max_iter=1000, random_state=0))
+clf5 = make_pipeline(SMOTE(random_state=0), LinearSVC(random_state=0))
+clf6 = make_pipeline(SMOTE(random_state=0), KerasClassifier(build_fn=dnn_models1, epochs=25, batch_size=1000, verbose=1))
 
 total_scores_1 = []
 total_scores_2 = []
@@ -306,7 +288,7 @@ total_scores_4 = []
 total_scores_5 = []
 total_scores_6 = []
 
-#hitseq_num = 3
+
 for hitseq_num in tqdm_notebook(range(1,11)):
     온라인_x1 = []
     for idx_index, idx_value in enumerate(idx) :

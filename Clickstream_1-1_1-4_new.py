@@ -48,16 +48,16 @@ from keras import backend as K
 from imblearn.pipeline import Pipeline, make_pipeline
 
 def recall_m(y_true, y_pred):
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-        recall = true_positives / (possible_positives + K.epsilon())
-        return recall
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+    recall = true_positives / (possible_positives + K.epsilon())
+    return recall
 
 def precision_m(y_true, y_pred):
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-        precision = true_positives / (predicted_positives + K.epsilon())
-        return precision
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    precision = true_positives / (predicted_positives + K.epsilon())
+    return precision
 
 def f1_m(y_true, y_pred):
     precision = precision_m(y_true, y_pred)
@@ -68,7 +68,7 @@ def make_padding_and_oversample(X, Y, length=350):
     X_padding = sequence.pad_sequences(X, maxlen=length, padding='pre', truncating='post')
     X_padding2 = X_padding.reshape(X.shape[0], length* X_padding.shape[2])
     print("pad_sequences 완료")
-    return X_padding, X_padding2, Y_resampled
+    return X_padding, X_padding2, Y
 
 # 각 clnt_id별 session이 바뀌는 지점 index 저장
 idx1 = 온라인.unique_id.drop_duplicates().index.tolist()
@@ -195,16 +195,16 @@ from keras import backend as K
 from imblearn.pipeline import Pipeline, make_pipeline
 
 def recall_m(y_true, y_pred):
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-        recall = true_positives / (possible_positives + K.epsilon())
-        return recall
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+    recall = true_positives / (possible_positives + K.epsilon())
+    return recall
 
 def precision_m(y_true, y_pred):
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-        precision = true_positives / (predicted_positives + K.epsilon())
-        return precision
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    precision = true_positives / (predicted_positives + K.epsilon())
+    return precision
 
 def f1_m(y_true, y_pred):
     precision = precision_m(y_true, y_pred)

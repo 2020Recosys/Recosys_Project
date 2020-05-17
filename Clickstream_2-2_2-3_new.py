@@ -108,7 +108,7 @@ from imblearn.pipeline import Pipeline, make_pipeline
 
 # 종속변수(구매여부) 추출
 Y_resampled = 온라인2.buy.astype('int').to_list()
-X_resampled = np.array(온라인2.iloc[:, 1:-3])
+X_resampled = np.array(온라인2.fillna(0).iloc[:, 1:-3])
 
 
 cv = StratifiedKFold(10, shuffle=True, random_state=42)
@@ -221,7 +221,7 @@ for i, j in tqdm_notebook(zip(idx1, idx3), total=len(idx1)):
     for k in range(i, j) :
         온라인_x.append(온라인.iloc[k, :])
 
-온라인_x = pd.DataFrame(온라인_x)
+온라인_x = pd.DataFrame(온라인_x.fillna(0))
 온라인_x.drop(['clnt_id', 'sess_id', 'trans_id', 'buy'], axis=1, inplace=True)
 
 

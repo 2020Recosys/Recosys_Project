@@ -91,14 +91,9 @@ idx = list(pd.Series(idx2) - pd.Series(idx1))
 max(idx), np.percentile(pd.Series(idx),99)
 
 
-온라인_x = 온라인2.iloc[:, 1:-3]
-온라인_x = np.array(온라인_x)
-
 # session 당 구매 여부
-온라인_y = 온라인2.buy
-
-X_resampled = 온라인_x
-Y_resampled = 온라인_y
+X_resampled = 온라인2.iloc[:, 1:-3].fillna(0)
+Y_resampled = 온라인2.fillna(0).buy
 
 def dnn_models():
     dnn_model = Sequential()
@@ -215,7 +210,7 @@ g = 구매여부2.groupby('clnt_id')
 온라인2 = 온라인.copy()
 온라인2.drop(['clnt_id', 'sess_id', 'trans_id', 'buy'], axis=1, inplace=True)
 
-온라인_x = np.array(온라인2)
+온라인_x = np.array(온라인2.fillna(0))
 
 # 각 clnt_id별 session이 바뀌는 지점 index 저장
 idx1 = 온라인2.unique_id.drop_duplicates().index.tolist()

@@ -3,7 +3,7 @@
 ## 참고 사항
 ### 1. 다음 세션 구매 예측
 1. 현재 세션(1개)의 모든 클릭 로그를 대상으로 LSTM을 사용해서 다음 세션에 구매가 일어날지를 예측
-2. 현재 세션(1개)의 모든 클릭 로그를 대상으로 MLP, Gaussian Naive Bayes, Decision Tree, XGBoost, Logistic Regression, Linear SVM을 사용해서 구매 예측
+2. ~현재 세션(1개)의 모든 클릭 로그를 대상으로 MLP, Gaussian Naive Bayes, Decision Tree, XGBoost, Logistic Regression, Linear SVM을 사용해서 구매 예측~ - 스코어 확인 완료
 3. 현재 세션 앞 부분의 10개의 클릭 로그를 대상으로 구매 예측을 할 때, MLP, Gaussian Naive Bayes, Decision Tree, XGBoost, Logistic Regression, Linear SVM을 사용해서 구매 예측
 4. 현재 세션 앞 부분의 2~10개의 클릭 로그를 대상으로 구매 예측을 할 때, LSTM만을 사용해서 구매 예측
 

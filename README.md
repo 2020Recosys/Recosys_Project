@@ -1,5 +1,4 @@
-# Predicting Online Purchase Behavior Using Truncated Session Data
-## Comparing the within session and inter session
+# Predicting Online Purchase Behavior Using Truncated Session Data - Comparing the within session and inter session
 
 ## 참고 사항
 ### 1. 다음 세션 구매 예측
